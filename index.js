@@ -21,7 +21,7 @@ const port = process.env.PORT || 5000;
 // ✅ ৩. Middleware
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://adopt-pet-client.vercel.app',
     credentials: true,
   }),
 );
@@ -120,15 +120,26 @@ app.patch('/users/role', verifyJWT, verifyAdmin, async (req, res) => {
 });
 
 // ইউজারের রোল চেক করা
+
 app.get('/users/role/:email', async (req, res) => {
-  const { data } = await supabase
+  const { email } = req.params;
+  const { data, error } = await supabase
     .from('users')
     .select('role')
-    .eq('email', req.params.email)
+    .eq('email', email)
     .single();
-  res.send({ role: data?.role || 'user' });
-});
 
+  if (error) {
+    // এটি আপনাকে জানাবে ডাটাবেস থেকে কোনো এরর আসছে কি না
+    return res.status(400).send({ role: 'error', message: error.message });
+  }
+
+  if (!data) {
+    return res.send({ role: 'not_found' });
+  }
+
+  res.send({ role: data.role });
+});
 // ------------------------ ৬. PETS ROUTES ------------------------
 
 app.get('/pets', async (req, res) => {
